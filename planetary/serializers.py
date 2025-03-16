@@ -41,6 +41,7 @@ class ReservationSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    show_session_detail = ShowSessionSerializer(source='show_session', read_only=True)
     class Meta:
         model = Ticket
         fields = "__all__"
