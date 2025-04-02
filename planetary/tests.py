@@ -34,7 +34,10 @@ def auth_client(api_client, test_user):
 
 @pytest.mark.django_db
 def test_astronomy_show_list(api_client):
-    AstronomyShow.objects.create(title="Black Holes", description="A journey through space")
+    AstronomyShow.objects.create(
+        title="Black Holes",
+        description="A journey through space"
+    )
     url = reverse("astronomyshow-list")
     response = api_client.get(url)
     assert response.status_code == 200
@@ -75,8 +78,15 @@ def test_reservation_create(auth_client, test_user):
 
 @pytest.mark.django_db
 def test_ticket_create(auth_client, test_user):
-    dome = PlanetariumDome.objects.create(name="Main Dome", rows=10, seats_in_row=20)
-    show = AstronomyShow.objects.create(title="Galaxies", description="Deep space exploration")
+    dome = PlanetariumDome.objects.create(
+        name="Main Dome",
+        rows=10,
+        seats_in_row=20
+    )
+    show = AstronomyShow.objects.create(
+        title="Galaxies",
+        description="Deep space exploration"
+    )
     session_time = timezone.now() + timedelta(days=1)
     session = ShowSession.objects.create(
         astronomy_show=show, planetarium_dome=dome, show_time=session_time
