@@ -35,7 +35,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("planetary.urls")),
-    path("api/user/", include("user.urls")),
+    path("api/user/", include("account.urls")),
 
     # JWT
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),

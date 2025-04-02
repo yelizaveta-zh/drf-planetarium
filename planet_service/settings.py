@@ -40,10 +40,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_yasg",
     "planetary",
-    "user",
+    "account",
 ]
 
-AUTH_USER_MODEL = "user.User"
+AUTH_USER_MODEL = "account.CustomUser"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
