@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from rest_framework.test import APIClient
 from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 CREATE_USER_URL = reverse("user:create")
@@ -29,7 +30,7 @@ class PublicUserApiTests(TestCase):
         res = self.client.post(CREATE_USER_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        user = get_user_model().objects.get(**res.data)
+        user = get_user_model().objects.get(email=payload["email"])
         self.assertTrue(user.check_password(payload["password"]))
         self.assertNotIn("password", res.data)
 
@@ -67,3 +68,27 @@ class PublicUserApiTests(TestCase):
         res = self.client.post(TOKEN_URL, payload)
         self.assertIn("token", res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+def get_jwt_token(user):
+    refresh = RefreshToken.for_user(user)
+    return str(refresh.access_token)
+
+
+class PrivateUserApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            email="test@test.com",
+            password="testpass"
+        )
+        self.token = get_jwt_token(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
+    def test_retrieve_user_profile(self):
+        res = self.client.get(ME_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_user_unauthorized(self):
+        res = self.client.get(ME_URL)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)

@@ -4,6 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from planetary.models import (
     AstronomyShow,
@@ -19,16 +20,19 @@ def api_client():
 
 
 @pytest.fixture
-def test_user():
+def test_user(db):
     return get_user_model().objects.create_user(
-        username="testuser",
+        email="test@test.com",
         password="testpass"
     )
 
 
 @pytest.fixture
 def auth_client(api_client, test_user):
-    api_client.force_authenticate(user=test_user)
+    refresh = RefreshToken.for_user(test_user)
+    api_client.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {str(refresh.access_token)}"
+    )
     return api_client
 
 
@@ -38,7 +42,7 @@ def test_astronomy_show_list(api_client):
         title="Black Holes",
         description="A journey through space"
     )
-    url = reverse("astronomyshow-list")
+    url = reverse("planetary:astronomyshow-list")  # Додано "planetary:"
     response = api_client.get(url)
     assert response.status_code == 200
     assert any(item["title"] == "Black Holes" for item in response.data)
@@ -46,7 +50,7 @@ def test_astronomy_show_list(api_client):
 
 @pytest.mark.django_db
 def test_astronomy_show_create_unauthenticated(api_client):
-    url = reverse("astronomyshow-list")
+    url = reverse("planetary:astronomyshow-list")
     data = {"title": "Exoplanets", "description": "Discovering new worlds"}
     response = api_client.post(url, data)
     assert response.status_code == 401
@@ -54,7 +58,7 @@ def test_astronomy_show_create_unauthenticated(api_client):
 
 @pytest.mark.django_db
 def test_astronomy_show_create_authenticated(auth_client):
-    url = reverse("astronomyshow-list")
+    url = reverse("planetary:astronomyshow-list")
     data = {"title": "Exoplanets", "description": "Discovering new worlds"}
     response = auth_client.post(url, data)
     assert response.status_code == 201
@@ -63,14 +67,14 @@ def test_astronomy_show_create_authenticated(auth_client):
 
 @pytest.mark.django_db
 def test_reservation_list_requires_auth(api_client):
-    url = reverse("reservation-list")
+    url = reverse("planetary:reservation-list")
     response = api_client.get(url)
     assert response.status_code == 401
 
 
 @pytest.mark.django_db
 def test_reservation_create(auth_client, test_user):
-    url = reverse("reservation-list")
+    url = reverse("planetary:reservation-list")
     response = auth_client.post(url, {})
     assert response.status_code == 201
     assert response.data["user"] == test_user.id
@@ -92,7 +96,7 @@ def test_ticket_create(auth_client, test_user):
         astronomy_show=show, planetarium_dome=dome, show_time=session_time
     )
     reservation = Reservation.objects.create(user=test_user)
-    url = reverse("ticket-list")
+    url = reverse("planetary:ticket-list")
     data = {
         "row": 5,
         "seat": 10,
