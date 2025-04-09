@@ -8,3 +8,7 @@ exclude =
     **migrations
     venv
     tests
+    Dockerfile
+    docker-compose.yml
+    .env
+    .env.sample
